@@ -1,0 +1,42 @@
+static_resources:
+  listeners:
+  - name: listener_1
+    address:
+      socket_address:
+        address: 0.0.0.0
+        port_value: 8080
+    filter_chains:
+    - filters:
+      - name: envoy.filters.network.http_connection_manager
+        typed_config:
+          "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+          stat_prefix: http_proxy
+          http_filters:
+          - name: envoy.filter.http.router
+            typed_config:
+              "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+          route_config:
+            name: http_k8s_proxy_route
+            virtual_hosts:
+            - name: http_k8s_host
+              domains: ["*"]
+              routes:
+              - match:
+                  prefix: "/"
+                route:
+                  cluster: cluster_1
+
+  clusters:
+  - name: cluster_1
+    type: strict_dns
+    connect_timeout: 1s
+    lb_policy: ${ENVOY_LB_POLICY}
+    load_assignment:
+      cluster_name: demo_app
+      endpoints:
+      - lb_endpoints:
+        - endpoint:
+            address:
+              socket_address:
+                address: ${SERVICE_NAME}
+                port_value: ${SERVICE_PORT}

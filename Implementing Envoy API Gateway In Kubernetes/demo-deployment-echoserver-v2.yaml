@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-server-echoserver-v2
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: web-server-echoserver-v2
+  template:
+    metadata:
+      labels:
+        app: web-server-echoserver-v2
+    spec:
+      containers:
+      - image: cilium/echoserver
+        imagePullPolicy: IfNotPresent
+        name: echoserver-web-server-v2
+        ports:
+        - containerPort: 80

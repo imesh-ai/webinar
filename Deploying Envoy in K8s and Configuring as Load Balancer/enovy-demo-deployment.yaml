@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: envoy-proxy-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: envoy-proxy
+  template:
+    metadata:
+      labels:
+        app: envoy-proxy
+    spec:
+      containers:
+      - name: envoy
+        image: imeshai/envoy-k8s-demo:v1
+        env:
+        - name: ENVOY_LB_POLICY
+          value: ROUND_ROBIN
+        - name: SERVICE_NAME
+          value: demo-app-headless-service
+        - name: SERVICE_PORT
+          value: "80"
+        ports:
+        - containerPort: 8080

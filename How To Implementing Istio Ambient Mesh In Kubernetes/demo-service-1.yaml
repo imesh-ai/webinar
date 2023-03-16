@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: echoserver-service-1
+  namespace: ambient
+spec:
+  selector:
+    app: echoserver-app-1
+  ports:
+  - port: 80
+    targetPort: 80

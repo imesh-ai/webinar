@@ -1,0 +1,16 @@
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: Gateway
+metadata:
+  name: echoserver-gtw-1
+  namespace: ambient
+  annotations:
+    istio.io/for-service-account: echo-service-account-1
+spec:
+  gatewayClassName: istio-waypoint
+  listeners:
+  - allowedRoutes:
+      namespaces:
+        from: Same
+    name: imesh.ai
+    port: 15008
+    protocol: ALL

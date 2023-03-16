@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: echoserver-depl-2
+  namespace: ambient
+  labels:
+    app: echoserver-depl-2
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: echoserver-app-2
+  template:
+    metadata:
+      labels:
+        app: echoserver-app-2
+    spec:
+      serviceAccountName: echo-service-account-2
+      containers:
+      - name: echoserver-app-2
+        image: imeshai/echoserver
+        ports:
+        - containerPort: 80

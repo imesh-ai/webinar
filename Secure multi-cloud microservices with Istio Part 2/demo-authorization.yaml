@@ -1,0 +1,17 @@
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: helloworld-policy
+  namespace: multi-cluster
+spec:
+  selector:
+    matchLabels:
+      version: v1
+  action: ALLOW
+  rules:
+  - from:
+    - source:
+        principals: ["cluster.local/ns/multi-cluster/sa/sleep-aks"]
+    to:
+    - operation:
+        methods: ["HEAD"]

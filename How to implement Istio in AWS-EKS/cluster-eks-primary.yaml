@@ -1,0 +1,14 @@
+apiVersion: install.istio.io/v1alpha1
+kind: IstioOperator
+spec:
+  values:
+    pilot:
+      env:
+        EXTERNAL_ISTIOD: true
+    global:
+      meshID: mesh1
+      multiCluster:
+        clusterName: cluster-eks
+      network: network1
+      proxy:
+        privileged: true

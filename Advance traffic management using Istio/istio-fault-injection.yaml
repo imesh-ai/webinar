@@ -1,0 +1,18 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: names-service-vs-fi
+  namespace: itm-demo
+spec:
+  hosts:
+    - names-service.itm-demo.svc.cluster.local
+  http:
+    - name: "names-service-route-fault-injection"
+      fault:
+        abort:
+          httpStatus: 504
+          percentage:
+            value: 100
+      route:
+        - destination:
+            host: names-service

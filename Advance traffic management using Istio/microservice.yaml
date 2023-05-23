@@ -1,0 +1,215 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  labels:
+    istio-injection: enabled
+  name: itm-demo
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: itm-demo
+data:
+  names-uri: names-service.itm-demo.svc.cluster.local
+  animals-uri: animals-service.itm-demo.svc.cluster.local
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: names-stable
+  namespace: itm-demo
+  labels:
+    app: names
+    version: stable
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: names
+      version: stable
+  template:
+    metadata:
+      labels:
+        app: names
+        version: stable
+    spec:
+      containers:
+        - name: names
+          image: mdazmal/microservice-names:stable
+          ports:
+            - containerPort: 4444
+          # resources:
+          #   limits:
+          #     memory: 256Mi
+          #     cpu: "1"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: names-new
+  namespace: itm-demo
+  labels:
+    app: names
+    version: new
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: names
+      version: new
+  template:
+    metadata:
+      labels:
+        app: names
+        version: new
+    spec:
+      containers:
+        - name: names
+          image: mdazmal/microservice-names:new
+          ports:
+            - containerPort: 4444
+          # resources:
+          #   limits:
+          #     memory: 256Mi
+          #     cpu: "1"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: names-service
+  namespace: itm-demo
+spec:
+  type: ClusterIP
+  selector:
+    app: names
+  ports:
+    - port: 80
+      targetPort: 4444
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: animals-stable
+  namespace: itm-demo
+  labels:
+    app: animals
+    version: stable
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: animals
+      version: stable
+  template:
+    metadata:
+      labels:
+        app: animals
+        version: stable
+    spec:
+      containers:
+        - name: animals
+          image: mdazmal/microservice-animals:stable
+          ports:
+            - containerPort: 4445
+          # resources:
+          #   limits:
+          #     memory: 256Mi
+          #     cpu: "1"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: animals-new
+  namespace: itm-demo
+  labels:
+    app: animals
+    version: new
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: animals
+      version: new
+  template:
+    metadata:
+      labels:
+        app: animals
+        version: new
+    spec:
+      containers:
+        - name: animals
+          image: mdazmal/microservice-animals:new
+          ports:
+            - containerPort: 4445
+          # resources:
+          #   limits:
+          #     memory: 256Mi
+          #     cpu: "1"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: animals-service
+  namespace: itm-demo
+spec:
+  selector:
+    app: animals
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: 4445
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: client-stable
+  namespace: itm-demo
+  labels:
+    app: client
+    version: stable
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: client
+      version: stable
+  template:
+    metadata:
+      labels:
+        app: client
+        version: stable
+    spec:
+      containers:
+        - name: client
+          image: mdazmal/microservice-client:stable
+          ports:
+            - containerPort: 3000
+          env:
+            - name: NAME_ENDPOINT
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: names-uri
+            - name: ANIMAL_ENDPOINT
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: animals-uri
+          # resources:
+          #   limits:
+          #     memory: 1024Mi
+          #     cpu: "1"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: client-service
+  namespace: itm-demo
+spec:
+  selector:
+    app: client
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: 3000

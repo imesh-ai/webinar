@@ -1,0 +1,13 @@
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: animal-service-dr-cb
+  namespace: itm-demo
+spec:
+  host: animals-service
+  trafficPolicy:
+    outlierDetection:
+      consecutive5xxErrors: 3
+      interval: 20s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 100

@@ -1,0 +1,43 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: names-service-vs
+  namespace: itm-demo
+spec:
+  hosts:
+    - names-service.itm-demo.svc.cluster.local
+  http:
+    - name: "names-service-routes"
+      route:
+        - destination:
+            host: names-service.itm-demo.svc.cluster.local
+            subset: names-stable
+          weight: 90
+        - destination:
+            host: names-service.itm-demo.svc.cluster.local
+            subset: names-new
+          weight: 10
+      # retries:
+      #   attempts: 3
+      #   perTryTimeout: 5s
+      #   retryOn: gateway-error,connect-failure,refused-stream
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: names-service-dr
+  namespace: itm-demo
+spec:
+  host: names-service
+  trafficPolicy:
+    loadBalancer:
+      simple: ROUND_ROBIN
+  subsets:
+    - name: names-stable
+      labels:
+        app: names
+        version: stable
+    - name: names-new
+      labels:
+        app: names
+        version: new

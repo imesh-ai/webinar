@@ -1,0 +1,38 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: client-gateway-itm
+  namespace: itm-demo
+spec:
+  selector:
+    istio: ingressgateway # use istio default controller
+  servers:
+    - port:
+        number: 80
+        name: http
+        protocol: HTTP
+      hosts:
+        - "*"
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: client-gateway-vs
+  namespace: itm-demo
+spec:
+  hosts:
+    - "*"
+  gateways:
+    - client-gateway-itm
+  http:
+    - match:
+        - uri:
+            exact: /ui-demo
+      rewrite:
+        uri: "/"
+
+      route:
+        - destination:
+            host: client-service
+            port:
+              number: 80

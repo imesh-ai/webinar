@@ -1,0 +1,27 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: echoserver-vs
+spec:
+  hosts:
+  - "*"
+  gateways:
+  - echo-gateway
+  http:
+  - match:
+    - uri:
+        prefix: /
+    route:
+    - destination:
+        port:
+          number: 80
+        host: echoserver-service
+        subset: v1
+      weight: 20
+    - destination:
+        port:
+          number: 80
+        host: echoserver-service
+        subset: v2
+      weight: 80
+

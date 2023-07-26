@@ -1,0 +1,12 @@
+fluent-bit:
+ enabled: false
+promtail:
+ enabled: false
+prometheus:
+ enabled: false
+ alertmanager:
+   persistentVolume:
+     enabled: false
+ server:
+   persistentVolume:
+     enabled: false

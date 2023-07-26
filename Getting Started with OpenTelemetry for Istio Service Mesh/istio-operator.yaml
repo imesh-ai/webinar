@@ -1,0 +1,14 @@
+apiVersion: install.istio.io/v1alpha1
+kind: IstioOperator
+metadata:
+  name: istio-operator
+  namespace: istio-system
+spec:
+  profile: default
+  meshConfig:
+    accessLogFile: /dev/stdout
+    accessLogFormat: |
+      startTime=%START_TIME% req="%REQ(:METHOD)% %REQ(X-ENVOY-ORIGINAL-PATH?:PATH)% %PROTOCOL%" responseCode=%RESPONSE_CODE% responseFlags=%RESPONSE_FLAGS% responseCodeDetails=%RESPONSE_CODE_DETAILS% connectionTerminationDetails=%CONNECTION_TERMINATION_DETAILS% upstreamTransportFailureReason="%UPSTREAM_TRANSPORT_FAILURE_REASON%" bytesReceived=%BYTES_RECEIVED% bytesSent=%BYTES_SENT% duration=%DURATION% upstreamServiceTime=%RESP(X-ENVOY-UPSTREAM-SERVICE-TIME)% xForwardedFor="%REQ(X-FORWARDED-FOR)%" userAgent="%REQ(USER-AGENT)%" requestId="%REQ(X-REQUEST-ID)%" requestAuthority="%REQ(:AUTHORITY)%" upstreamHost="%UPSTREAM_HOST%" upstreamCluster=%UPSTREAM_CLUSTER% upstreamLocalAddress=%UPSTREAM_LOCAL_ADDRESS% downstreamLocalAddress=%DOWNSTREAM_LOCAL_ADDRESS% downstreamRemoteAddress=%DOWNSTREAM_REMOTE_ADDRESS% requestedServerName=%REQUESTED_SERVER_NAME% routeName=%ROUTE_NAME% traceID=%REQ(x-b3-traceid)%
+    defaultConfig:
+      tracing:
+        sampling: 100

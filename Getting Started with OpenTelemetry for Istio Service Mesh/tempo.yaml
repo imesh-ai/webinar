@@ -1,0 +1,5 @@
+tempo:
+ extraArgs:
+   "distributor.log-received-traces": true
+ receivers:
+   zipkin:

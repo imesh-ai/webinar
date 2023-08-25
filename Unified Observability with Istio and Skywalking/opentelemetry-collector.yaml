@@ -1,0 +1,194 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: otel-collector-conf
+  labels:
+    app: opentelemetry
+    component: otel-collector-conf
+data:
+  otel-collector-config: |
+    receivers:
+      prometheus:
+        config:
+          scrape_configs:
+            - job_name: 'istiod-monitor'
+              kubernetes_sd_configs:
+               - role: endpoints
+              relabel_configs:
+               - source_labels: [ __meta_kubernetes_service_name, __meta_kubernetes_endpoint_port_name ]
+                 action: keep
+                 regex: istiod;http-monitoring
+               - action: labelmap
+                 regex: __meta_kubernetes_service_label_(.+)
+               - source_labels: [ ]
+                 target_label: cluster
+                 replacement: aks-demo-cluster
+            - job_name: 'kubernetes-cadvisor'
+              scheme: https
+              tls_config:
+                ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+              bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+              kubernetes_sd_configs:
+                - role: node
+              relabel_configs:
+                - action: labelmap
+                  regex: __meta_kubernetes_node_label_(.+)
+                - source_labels: [ ]
+                  target_label: cluster
+                  replacement: aks-demo-cluster
+                - target_label: __address__
+                  replacement: kubernetes.default.svc:443
+                - source_labels: [ __meta_kubernetes_node_name ]
+                  regex: (.+)
+                  target_label: __metrics_path__
+                  replacement: /api/v1/nodes/$${1}/proxy/metrics/cadvisor
+                - source_labels: [ instance ]
+                  separator: ;
+                  regex: (.+)
+                  target_label: node
+                  replacement: $$1
+                  action: replace
+            - job_name: 'kube-state-metrics'
+              metrics_path: /metrics
+              kubernetes_sd_configs:
+                - role: endpoints
+              relabel_configs:
+                - source_labels: [ __meta_kubernetes_service_label_app_kubernetes_io_name ]
+                  regex: kube-state-metrics
+                  replacement: $$1
+                  action: keep
+                - action: labelmap
+                  regex: __meta_kubernetes_service_label_(.+)
+                - source_labels: [ ]
+                  target_label: cluster
+                  replacement: aks-demo-cluster
+            - job_name: 'skywalking-so11y'
+              metrics_path: '/metrics'
+              kubernetes_sd_configs:
+                - role: pod
+              relabel_configs:
+                - source_labels: [ __meta_kubernetes_pod_container_name, __meta_kubernetes_pod_container_port_name ]
+                  action: keep
+                  regex: oap;metrics # @feature: so11y; reference the name of the metrics port
+                - source_labels: [ ]
+                  target_label: service
+                  replacement: oap-server
+                - source_labels: [ __meta_kubernetes_pod_name ]
+                  target_label: host_name
+                  regex: (.+)
+                  replacement: $$1
+    exporters:
+      otlp:
+        endpoint: skywalking-skywalking-helm-oap.skywalking.svc.cluster.local:11800
+        tls:
+          insecure: true
+      logging:
+        verbosity: normal
+    service:
+      pipelines:
+        metrics:
+          receivers: [prometheus]
+          exporters: [logging, otlp]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: otel-collector
+  labels:
+    app: opentelemetry
+    component: otel-collector
+spec:
+  selector:
+    component: otel-collector
+  ports:
+  - name: prometheus # prometheus exporter
+    port: 9090
+    protocol: TCP
+    targetPort: 9090
+  - name: zipkin # Default endpoint for Zipkin receiver.
+    port: 9411
+    protocol: TCP
+    targetPort: 9411
+  - name: metrics # Metrics for opentelemetry-collector
+    port: 8888
+    protocol: TCP
+    targetPort: 8888
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: otel-collector
+  labels:
+    app: opentelemetry
+    component: otel-collector
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: opentelemetry
+      component: otel-collector
+  minReadySeconds: 5
+  template:
+    metadata:
+      labels:
+        app: opentelemetry
+        component: otel-collector
+    spec:
+      serviceAccountName: otel-collector
+      containers:
+      - command:
+          - "/otelcol-contrib"
+          - "--config=/conf/otel-collector-config.yaml"
+        image: otel/opentelemetry-collector-contrib:0.83.0
+        name: otel-collector
+        resources:
+          limits:
+            cpu: 1
+            memory: 2Gi
+          requests:
+            cpu: 200m
+            memory: 400Mi
+        ports:
+        - containerPort: 9411  # Zipkin receiver.
+        - containerPort: 9090  # prometheus exporter
+        - containerPort: 8888  # collector metrics
+        env:
+          - name: MY_POD_IP
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: status.podIP
+        volumeMounts:
+        - name: otel-collector-config-vol
+          mountPath: /conf
+        - mountPath: /var/log
+          name: varlog
+        - mountPath: /var/lib/docker/containers
+          name: varlibdockercontainers
+          readOnly: true
+#        - name: otel-collector-secrets
+#          mountPath: /secrets
+      volumes:
+        - configMap:
+            name: otel-collector-conf
+            items:
+              - key: otel-collector-config
+                path: otel-collector-config.yaml
+          name: otel-collector-config-vol
+        - name: varlog
+          hostPath:
+            path: /var/log
+            type: ""
+        - name: varlibdockercontainers
+          hostPath:
+            path: /var/lib/docker/containers
+            type: ""
+#        - secret:
+#            name: otel-collector-secrets
+#            items:
+#              - key: cert.pem
+#                path: cert.pem
+#              - key: key.pem
+#                path: key.pem
+---

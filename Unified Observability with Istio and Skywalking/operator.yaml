@@ -1,0 +1,16 @@
+apiVersion: install.istio.io/v1alpha1
+kind: IstioOperator
+metadata:
+  namespace: istio-system
+  name: istio
+spec:
+  meshConfig:
+    defaultConfig:
+      envoyAccessLogService:
+        address: "skywalking-skywalking-helm-oap.skywalking.svc:11800"
+      envoyMetricsService:
+        address: "skywalking-skywalking-helm-oap.skywalking.svc:11800"
+      proxyStatsMatcher:
+        inclusionRegexps:
+          - .*
+    enableEnvoyAccessLogService: true

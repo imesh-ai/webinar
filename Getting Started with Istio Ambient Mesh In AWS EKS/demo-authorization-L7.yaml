@@ -1,0 +1,17 @@
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: echoserver-policy-waypoint
+  namespace: ambient
+spec:
+  selector:
+    matchLabels:
+      istio.io/gateway-name: echo-service-account-1
+  action: ALLOW
+  rules:
+  - from:
+    - source:
+        principals: ["cluster.local/ns/ambient/sa/sleep"]
+    to:
+    - operation:
+        methods: ["GET", "HEAD"]

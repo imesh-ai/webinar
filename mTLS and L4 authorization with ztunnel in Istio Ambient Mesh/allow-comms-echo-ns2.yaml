@@ -1,0 +1,15 @@
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-inbound-echo-ns2
+  namespace: ns2
+spec:
+  selector:
+    matchLabels:
+      app: echoserver-app-ns2
+  action: ALLOW
+  rules:
+    - from:
+        - source:
+            principals:
+              - cluster.local/ns/ns1/sa/sleep-service-account-ns1

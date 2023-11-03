@@ -1,0 +1,215 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ns2
+---
+#
+#
+#     ECHO SERVER
+#
+#
+
+# Service account for echo server
+
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: echo-service-account-ns2
+  namespace: ns2
+  labels:
+    account: echoserver-app-ns2
+---
+# Service for echo server
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: echoserver-service-ns2
+  namespace: ns2
+spec:
+  type: ClusterIP
+  selector:
+    app: echoserver-app-ns2
+  ports:
+    - port: 80
+      targetPort: 80
+---
+# Deployment for echo server
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: echoserver-depl-ns2-v1
+  namespace: ns2
+  labels:
+    app: echoserver-app-ns2
+    version: v1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: echoserver-app-ns2
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: echoserver-app-ns2
+        version: v1
+    spec:
+      serviceAccountName: echo-service-account-ns2
+      containers:
+        - name: echoserver-app-ns2
+          image: imeshai/echoserver
+          ports:
+            - containerPort: 80
+      nodeSelector:
+        name: node2
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: echoserver-depl-ns2-v2
+  namespace: ns2
+  labels:
+    app: echoserver-app-ns2
+    version: v2
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: echoserver-app-ns2
+      version: v2
+  template:
+    metadata:
+      labels:
+        app: echoserver-app-ns2
+        version: v2
+    spec:
+      serviceAccountName: echo-service-account-ns2
+      containers:
+        - name: echoserver-app-ns2
+          image: imeshai/echoserver
+          ports:
+            - containerPort: 80
+      nodeSelector:
+        name: node2
+---
+#
+#
+#     SLEEP SERVER
+#
+#
+
+# Service account for sleep
+
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: sleep-service-account-ns2
+  namespace: ns2
+  labels:
+    account: sleep-ns2
+---
+# Service for sleep
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: sleep-service-ns2
+  namespace: ns2
+  labels:
+    app: sleep-app-ns2
+    service: sleep-ns2
+spec:
+  ports:
+    - port: 80
+      name: http
+  selector:
+    app: sleep-app-ns2
+---
+# Deployment for sleep
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sleep-depl-ns2
+  namespace: ns2
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sleep-app-ns2
+  template:
+    metadata:
+      labels:
+        app: sleep-app-ns2
+    spec:
+      serviceAccountName: sleep-service-account-ns2
+      containers:
+        - name: sleep
+          image: curlimages/curl
+          command: ["/bin/sleep", "infinity"]
+          imagePullPolicy: IfNotPresent
+      nodeSelector:
+        name: node2
+---
+#
+#
+#     NOTSLEEP SERVER
+#
+#
+
+# Service account for notsleep
+
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: notsleep-service-account-ns2
+  namespace: ns2
+  labels:
+    account: notsleep-ns2
+---
+# Service for notsleep
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: notsleep-service-ns2
+  namespace: ns2
+  labels:
+    app: notsleep-app-ns2
+    service: notsleep-ns2
+spec:
+  ports:
+    - port: 80
+      name: http
+  selector:
+    app: notsleep-app-ns2
+---
+# Deployment for notsleep
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notsleep-depl-ns2
+  namespace: ns2
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: notsleep-app-ns2
+  template:
+    metadata:
+      labels:
+        app: notsleep-app-ns2
+    spec:
+      serviceAccountName: notsleep-service-account-ns2
+      containers:
+        - name: notsleep
+          image: curlimages/curl
+          command: ["/bin/sleep", "infinity"]
+          imagePullPolicy: IfNotPresent
+      nodeSelector:
+        name: node2
+---
+

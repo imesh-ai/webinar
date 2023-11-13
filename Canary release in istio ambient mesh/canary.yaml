@@ -1,0 +1,35 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: echoserver-vs
+  namespace: ns2
+spec:
+  hosts:
+    - echoserver-service-ns2.ns2.svc.cluster.local
+  http:
+    - route:
+        - destination:
+            host: echoserver-service-ns2.ns2.svc.cluster.local
+            subset: v1
+          weight: 90
+        - destination:
+            host: echoserver-service-ns2.ns2.svc.cluster.local
+            subset: v2
+          weight: 10
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: echoserver-dr
+  namespace: ns2
+spec:
+  host: echoserver-service-ns2
+  subsets:
+    - name: v1
+      labels:
+        app: echoserver-app-ns2
+        version: v1
+    - name: v2
+      labels:
+        app: echoserver-app-ns2
+        version: v2

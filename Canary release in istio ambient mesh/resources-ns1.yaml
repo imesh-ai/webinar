@@ -1,0 +1,53 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  labels:
+    istio.io/dataplane-mode: ambient
+  name: ns1
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: sleep-service-account-ns1
+  namespace: ns1
+  labels:
+    account: sleep-ns1
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sleep-service-ns1
+  namespace: ns1
+  labels:
+    app: sleep-app-ns1
+    service: sleep-ns1
+spec:
+  ports:
+    - port: 80
+      name: http
+  selector:
+    app: sleep-app-ns1
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sleep-depl-ns1
+  namespace: ns1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sleep-app-ns1
+  template:
+    metadata:
+      labels:
+        app: sleep-app-ns1
+    spec:
+      serviceAccountName: sleep-service-account-ns1
+      containers:
+        - name: sleep
+          image: curlimages/curl
+          command: ["/bin/sleep", "infinity"]
+          imagePullPolicy: IfNotPresent
+      nodeSelector:
+        name: node1

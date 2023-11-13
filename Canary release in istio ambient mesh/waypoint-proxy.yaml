@@ -1,0 +1,13 @@
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: Gateway
+metadata:
+  # annotations:
+  #   istio.io/for-service-account: echo-service-account-ns2
+  name: echo-service-account-ns2-gw
+  namespace: ns2
+spec:
+  gatewayClassName: istio-waypoint
+  listeners:
+  - name: mesh
+    port: 15008
+    protocol: HBONE

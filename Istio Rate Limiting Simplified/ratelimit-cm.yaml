@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ratelimit-config
+  namespace: istio-system
+data:
+  config.yaml: |
+    domain: httpbin-ratelimit
+    descriptors:
+      - key: remote_address
+        descriptors:
+        - key: PATH
+          value: "/get"
+          rate_limit:
+            unit: minute
+            requests_per_unit: 5
+        - key: PATH
+          value: "/"
+          rate_limit:
+            unit: minute
+            requests_per_unit: 3
+

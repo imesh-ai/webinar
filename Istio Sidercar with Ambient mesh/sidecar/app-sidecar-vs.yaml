@@ -1,0 +1,20 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: app-sidecar-vs
+  namespace: sidecar
+spec:
+  hosts:
+  - "*"
+  gateways:
+  - istio-system/app-gateway
+  http:
+  - match:
+    - uri:
+        prefix: /dashboard
+    route:
+    - destination:
+        host: dashboard
+        port:
+          number: 80
+ 

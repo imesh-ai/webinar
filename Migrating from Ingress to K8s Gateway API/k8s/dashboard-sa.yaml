@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: dashboard
+  namespace: banking-app
+  labels:
+    app: dashboard

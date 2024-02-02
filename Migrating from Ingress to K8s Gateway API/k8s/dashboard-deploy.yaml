@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dashboard
+  namespace: banking-app
+  labels:
+    app: dashboard
+    version: v1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dashboard
+  template:
+    metadata:
+      labels:
+        app: dashboard
+        version: v1
+    spec:
+      serviceAccountName: dashboard
+      containers:
+      - name: dashboard
+        image: imeshai/demo-bank-dashboard:latest
+        resources:
+          requests:
+            cpu: "100m"
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 3000
+        env:
+        - name: MY_POD
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: VERSION
+          value: "v1"
+        - name: ACCOUNT_URL
+          value: account:8080
+        - name: PROFILE_URL
+          value: profile:8081

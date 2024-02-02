@@ -1,0 +1,16 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: banking-gateway
+  namespace: banking-app
+  annotations:
+    service.beta.kubernetes.io/port_80_no_probe_rule: "true" # FOR AZURE
+spec:
+  gatewayClassName: istio
+  listeners:
+    - name: default
+      port: 80
+      protocol: HTTP
+      allowedRoutes:
+        namespaces:
+          from: All

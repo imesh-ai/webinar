@@ -1,0 +1,17 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: k8s-http-route-with-istio
+  namespace: with-istio
+spec:
+  parentRefs:
+    - name: k8s-gateway
+      namespace: k8s-gw
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /with-istio
+      backendRefs:
+        - name: echoserver-service-with-istio
+          port: 80

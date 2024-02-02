@@ -1,0 +1,22 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: banking-app-dashboard-ingress
+  namespace: banking-app
+  annotations:
+    service.beta.kubernetes.io/port_80_no_probe_rule: "true"
+    service.beta.kubernetes.io/azure-load-balancer-health-probe-request-path: /
+    nginx.ingress.kubernetes.io/server-snippet: |
+      more_set_headers "controller: NGINX";
+spec:
+  ingressClassName: "nginx"
+  rules:
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: dashboard
+                port:
+                  number: 3000

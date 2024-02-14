@@ -1,0 +1,31 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: k8s-gateway
+  namespace: tls-gw-api
+  annotations:
+    cert-manager.io/cluster-issuer: prod-cluster-issuer
+    # cert-manager.io/cluster-issuer: staging-cluster-issuer
+    service.beta.kubernetes.io/port_80_no_probe_rule: "true" # FOR AZURE
+    service.beta.kubernetes.io/port_443_no_probe_rule: "true" # FOR AZURE
+spec:
+  gatewayClassName: istio
+  listeners:
+    - name: http-listener
+      hostname: "*.imesh.ai"
+      port: 80
+      protocol: HTTP
+      allowedRoutes:
+        namespaces:
+          from: All
+    - name: https-listener
+      hostname: test.imesh.ai
+      port: 443
+      protocol: HTTPS
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: "test-imesh-cert"
+      allowedRoutes:
+        namespaces:
+          from: All

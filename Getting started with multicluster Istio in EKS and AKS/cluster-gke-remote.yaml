@@ -1,0 +1,11 @@
+apiVersion: install.istio.io/v1alpha1
+kind: IstioOperator
+spec:
+  profile: remote
+  values:
+    istiodRemote:
+      injectionPath: /inject/cluster/cluster-aks/net/network2
+    global:
+      remotePilotAddress: 52.21.200.160 # <ip of primary east-west gateway>
+      proxy:
+        privileged: true

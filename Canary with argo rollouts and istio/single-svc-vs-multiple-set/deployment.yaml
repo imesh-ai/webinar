@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rollouts-demo-deployment
+  namespace: istio-argo-rollouts
+spec:
+  replicas: 0 # this has to be made 0 once rollout is active and functional.
+  selector:
+    matchLabels:
+      app: rollouts-demo
+  template:
+    metadata:
+      labels:
+        app: rollouts-demo
+    spec:
+      containers:
+      - name: rollouts-demo
+        image: argoproj/rollouts-demo:blue
+        ports:
+        - name: http
+          containerPort: 8080
+        resources:
+            requests:
+              memory: 32Mi
+              cpu: 5m

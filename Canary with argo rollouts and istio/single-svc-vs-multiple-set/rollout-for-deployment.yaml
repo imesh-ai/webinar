@@ -1,0 +1,36 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: rollouts-demo
+  namespace: istio-argo-rollouts
+spec:
+  replicas: 1
+  strategy:
+    canary:
+      trafficRouting:
+        istio:
+          virtualService:
+            name: rollouts-demo-vs2        # required
+            routes:
+            - route-one                 # optional if there is a single route in VirtualService, required otherwise
+          destinationRule:
+            name: rollout-destrule    # required
+            canarySubsetName: canary  # required
+            stableSubsetName: stable  # required
+      steps:
+      - setWeight: 33
+      - pause: {}
+      - setWeight: 40
+      - pause: {duration: 10}
+      - setWeight: 60
+      - pause: {duration: 10}
+      - setWeight: 80
+      - pause: {duration: 10}
+  revisionHistoryLimit: 2
+  selector:
+    matchLabels:
+      app: rollouts-demo
+  workloadRef: 
+    apiVersion: apps/v1
+    kind: Deployment
+    name: rollouts-demo-deployment

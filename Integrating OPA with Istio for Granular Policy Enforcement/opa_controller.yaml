@@ -1,0 +1,347 @@
+############################################################
+# Add the following to the mesh config to enable external authorization:
+# mesh: |-
+#   # ADD THIS HERE
+#   extensionProviders:
+#   - name: opa-ext-authz-grpc
+#     envoyExtAuthzGrpc:
+#       service: opa-ext-authz-grpc.local
+#       port: "9191"
+#   # END
+#   defaultConfig:
+#     discoveryAddress: istiod.istio-system.svc:15012
+############################################################
+############################################################
+# Namespace for cluster-wide OPA-Istio components.
+############################################################
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: opa-istio
+---
+############################################################
+# TLS certificate for OPA admission controller.
+############################################################
+apiVersion: v1
+kind: Secret
+metadata:
+  name: server-cert
+  namespace: opa-istio
+data:
+  tls.crt: |-
+    LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUZZRENDQTBpZ0F3SUJBZ0lKQUlWYlFzL2o3
+    VmJDTUEwR0NTcUdTSWIzRFFFQkN3VUFNQnN4R1RBWEJnTlYKQkFNTUVFOVFRU0JGYm5admVTQndi
+    SFZuYVc0d0hoY05NakF4TVRJek1UQTBORE00V2hjTk1qVXhNVEl5TVRBMApORE00V2pBVU1SSXdF
+    QVlEVlFRRERBbHZjR0V0Wlc1MmIza3dnZ0lpTUEwR0NTcUdTSWIzRFFFQkFRVUFBNElDCkR3QXdn
+    Z0lLQW9JQ0FRRCtsK2FpNUlBelZxc3U0RlFtNkRJclZaNTVHV2ZRbkFiUGxLbzl5VEtTOHhRNVBN
+    NkoKMHI4S2RtNE5FckdlRUVSTEN6cW1HdW9ORGhxaWwwQTZNVFd3aG4rbXFNSVNTQjU1ZmVUMEtr
+    ZWNYOUtrLy84OQoxM3hRMFU5VmlNSi9sK3RvRXBBUHJwVGNYSTByVDdBYUZwTmRrSDY0MmJCR1JI
+    bXBkK1lpWFRjVGZ5cXo2ZHZlCndlbmROcERQckI5UHc5N1k5amxUbXZTaTVpVFZqMitZSmd3a21L
+    QnRGVHNqVkdIT2VmZ0FIcURob0M4TmhocDAKYUxqTTNzaGhpM2JUd1A2VjVOT212dnVLUm1tN3pm
+    azdMVUJZTkxYNmZYSXpDcFIxUEpBeGdra01UWlA2Y1hFNAordm4xako3bS9lZHFZVHUyK242dEdQ
+    WFVST2FZKzNNTkVNbm4xY1ZzMVRLQ25jbmFnU3RvcUZ3bmhWak4yNlV1CjE3c1puZitsNXFPd0di
+    TmNseDdIckY2SHNpU2hBKzEzOE5pbUt4bmZtQ3l2YnZJOHBYMUkxMXV5SzB6Wmg2Mk4KRHBPdU1E
+    VWFGQldkR05veGNwNXFEcHNWancxUzJCWWpkZlduTzVjZWc5WnNzSmNNVXFhOHRIdVF3ejBERjhv
+    cQpyeGI4MFZOMDUzcWlpQnVCUGg4MVpRQnZFeitTMERFakdPcUNnMGxPV0hMWTdLanBSbUh5TVo5
+    K0Z0NHRNQU91Cm9CaUFzYmdoSnVMREZ5bklHcUNQNS91OHN3QTdSUHlKODFuWnV1TWZKVTlHUnF1
+    OUgydlEzczRXYzlFRXZaZGkKNnZhTCticXlSNFJyNlg0YXpnb1ZGRlA1dzR4WTBCR1Z4WWN6cWlS
+    Tnc4cHRlNm5SWlhsZk5iT1NOUUlEQVFBQgpvNEd0TUlHcU1BNEdBMVVkRHdFQi93UUVBd0lEdURB
+    VEJnTlZIU1VFRERBS0JnZ3JCZ0VGQlFjREFUQWRCZ05WCkhRNEVGZ1FVS1hTN2tUR2FlOHRLWVp2
+    UkxSUzV4U0h3cTRFd05RWURWUjBqQkM0d0xLRWZwQjB3R3pFWk1CY0cKQTFVRUF3d1FUMUJCSUVW
+    dWRtOTVJSEJzZFdkcGJvSUpBTmFPYlFCRlAwMWlNQzBHQTFVZEVRUW1NQ1NDSW1GawpiV2x6YzJs
+    dmJpMWpiMjUwY205c2JHVnlMbTl3WVMxcGMzUnBieTV6ZG1Nd0RRWUpLb1pJaHZjTkFRRUxCUUFE
+    CmdnSUJBS3RxZWY0dE12R3hCZU0xKy9GZTRxOVYrOUpuMHFKb1A0aWVTQXB3aGtxekFKYllJUno2
+    VkNrK2V2WkUKWHZ2MjVCQmVOSUQwd2pXb1hEdHdTMVgrQ0hkN0J5TEdLNjZEMitwZXpFN0hDenhD
+    RUxKNCtpWXRjS3JVQTR2ZQpXbkVnSW5qa1Vpb3kwZkRkWmVUWG5ISUlpeTlJVVZEVDlxN2xHalE0
+    YXhiSUd6NkczY2VHUStYOVFCMDAzMzNICm82emY5a1Frc1hQam00dWpsOVV2Z1JkNDVZQW04Y3FK
+    cTRqb3hHQjdGMVpUMVJYbkdKeXYvd3FOSk04VGQ5UGoKYXNiN0lCa09Lelh4VmREWE5UZmNLWU44
+    TzNFQkwwVGo0VExtM1VKUmNxeGhFNk1ZVXJvRTYvZHIybHh0ZzRZLwo1SmpYWjBiQ2ZyTnh5UFIz
+    NTEyNDRPWnVQMzM0ajhDOXg1cU1YaDZUMzhpS01GWmxwNmpjMEdZTUdzK3pBNGNlCk5GWk9RMjF6
+    ZE9vR2NQS2d3NDJjd09iU1ZaRUl0NFJIN0hVcDdDV1pCK0VpTXQxZUVKa1VkeE5jUFl3VlBmdSsK
+    Z2JJV3Y2ZUl6VkJJOElBdHdUQTBFcmU1RGxQQmYyTnJOclB1cmZzYjJiZ21CUTFJREN6V29yUnE2
+    WG1UMWUregovM1JSYVJpVUx4TmFub2szTGdSa09oWDZqR3FiM1gxRjhwdHNiK1BHUnlXcDVkdS9D
+    UEFucGZ3VnVtbzQ4bXBxCkRJSWRMMVBLZk1DZFlrMGFLZ0xUVnU0bDI2N1B4cklpaGs4SHFRWFdQ
+    YVp5NDJ0UlVaOXZFNWZoblNwMXpGQUsKcTNaMVcxVDdpMkNQdmFuNTlGckhlUG9ia0Z2Z1M4M3Zu
+    VXFIM2h6aGZ1QlpDMmNmCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K
+  tls.key: |-
+    LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlKS0FJQkFBS0NBZ0VBL3BmbW91U0FN
+    MWFyTHVCVUp1Z3lLMVdlZVJsbjBKd0d6NVNxUGNreWt2TVVPVHpPCmlkSy9Dblp1RFJLeG5oQkVT
+    d3M2cGhycURRNGFvcGRBT2pFMXNJWi9wcWpDRWtnZWVYM2s5Q3BIbkYvU3BQLy8KUGRkOFVORlBW
+    WWpDZjVmcmFCS1FENjZVM0Z5TkswK3dHaGFUWFpCK3VObXdSa1I1cVhmbUlsMDNFMzhxcytuYgoz
+    c0hwM1RhUXo2d2ZUOFBlMlBZNVU1cjBvdVlrMVk5dm1DWU1KSmlnYlJVN0kxUmh6bm40QUI2ZzRh
+    QXZEWVlhCmRHaTR6TjdJWVl0MjA4RCtsZVRUcHI3N2lrWnB1ODM1T3kxQVdEUzErbjF5TXdxVWRU
+    eVFNWUpKREUyVCtuRngKT1ByNTlZeWU1djNuYW1FN3R2cCtyUmoxMUVUbW1QdHpEUkRKNTlYRmJO
+    VXlncDNKMm9FcmFLaGNKNFZZemR1bApMdGU3R1ozL3BlYWpzQm16WEpjZXg2eGVoN0lrb1FQdGQv
+    RFlwaXNaMzVnc3IyN3lQS1Y5U05kYnNpdE0yWWV0CmpRNlRyakExR2hRVm5SamFNWEtlYWc2YkZZ
+    OE5VdGdXSTNYMXB6dVhIb1BXYkxDWERGS212TFI3a01NOUF4ZksKS3E4Vy9ORlRkT2Q2b29nYmdU
+    NGZOV1VBYnhNL2t0QXhJeGpxZ29OSlRsaHkyT3lvNlVaaDhqR2ZmaGJlTFRBRApycUFZZ0xHNElT
+    Yml3eGNweUJxZ2orZjd2TE1BTzBUOGlmTloyYnJqSHlWUFJrYXJ2UjlyME43T0ZuUFJCTDJYCll1
+    cjJpL202c2tlRWErbCtHczRLRlJSVCtjT01XTkFSbGNXSE02b2tUY1BLYlh1cDBXVjVYeld6a2pV
+    Q0F3RUEKQVFLQ0FnQUJGWFoyNVJBaXA5RE12MG04YktxaUFwaE5IYTJTZHNlVXBLWmc0dlZqS01Q
+    Q1JwNytlVFkwL2pJVAp2aXVoWjZKU3kzWnhkSlhnZmxuZ3JWSXByVUgwUVc1VHNFNDdNN0ZsaFFL
+    dmcycVFvTnZOdGdWSkp4eXhYMksrCkUzbjRmeFlTZUZuQ3AxU2M1NHYyVGoyS3J1UHJ0d3pERHJJ
+    d2FtUTJNM3Q0VS90REN2eU1qWWRSR0hROWE5a0wKK1VpYzExR2dqTlBMcGxJNlMwNkcxamg4WmxV
+    UTV0RndCWEllQVdMMU5SRzRObWtxN0xxbWpSYVp2a1JqSXVPcApmcVYvMjBkNkxlSTB5SVZibmxj
+    ZTVJNldFT2hBTitFNmNzUkVzVnZXYis2Uk4yUEdPS0pUbzUzK3h4cS9UOXp4ClVNMW1aNG1RaXRw
+    MU5ERC91VmRkK1Z3UkJ5eEUzVGlsem1jdGZBejdyQnhaTFhKRlJDQzRMUXZ2NExveVhtTTIKSGV5
+    WTJkRUhPNUxGbVZrWGJSTHM2MHhhVGcxQ1JVL3ZxTjhDd3NteDhnVWp4N1dxYjVGTjdkZ3J3MXhL
+    OFlvWApNQXNwRml4bTU3QlREZVhlUnlNa1VoanlEVjhCQ3l6TzVaL2RDTERwb1BveXZFeU1La3hv
+    UWxiUWNKcGtHL2RXCmw0U2d0UkRjRExlVGhyaTRlVFlDbS9uZjN5cmlicFpVZjBSRzMwejBBV1dS
+    SWEvcGZNOUM0OUZ0M1NtREdQbjIKMkRSUEhyampVT21mRTB4R1VLbmkrQ3VvZ2RJdEhnZXR1U0tY
+    TUl0emNxTkhFRE5kdlJNdlpaZk5UNEpvWUVIbwp5OWRVa0dlME1vbEdhWm80Q0tIcFZ2UjlYNE5n
+    a080dFBKK1h3TE1wUGYveWI0TFRJUUtDQVFFQS82TWpSOVVnCjRhQy9RZ1c5L0dxSHMyUnRRZEtU
+    ZFhNeExsQnl1OWFtbEJyQS9kQUpZem5XckpZNytmVzh2ZzBCOHI4a1A2cmUKQmZvY3F4RmRrcS9J
+    RTl0L3JHTGJWa2lDTVRKMU80ak9jZHhKVlZGRTIwd001cmRwZE9scWp6SUE3TURiSXFiZwpEYm9n
+    aHVqZC8rd3dDclI2eG1jeGlkSHZXMzZOM0YzY05QTnk5MVFlS1lrWjVBc2ZVRUxBdFA1QnRUb0dC
+    ZkFHCkF1bExmdWVnZ2IxczU1NTBJb3Vwc2lydGhRMTdobC9mc05vSWd4eE14aHUrUUpRWjFEZlll
+    L096YzNJMy9sOFUKcDBzWmRROTlONmF3L3hTUGZ1Wi8ya2FucjNUazJ3NXdyeW1VUkxXMEkzSHRu
+    MENmRVVHeGphbWNLaU5Qd25wTwpWVHYydy90eWdnOEhiUUtDQVFFQS92UmlSNlVPQnZpNjBRVkpt
+    UzV5Zm5nNlJ5TnIrb2NodE9NSndLQklkRVg3ClpCV3lQMVdIbEYrYStFalhSWXdJb01SRy9maUZi
+    K1F1NjZtVVBPd0NwdElvSy9JTS9ROUFWaVhEQUpwemdkZE0KQzZnNFErVmFVTWd2MGZTZEZZSWZR
+    d3RxY0JZcnlJZzJPQ3c5clBXNEI5WURnUWhXV3FTK09OeW1CejJacFRlTQpYdjVBUDlQVDN1N2hu
+    cTgyVHdybWMzQjNmTzBpTmhEL295cnNoYUtZVWxqRjAxNmVpWkdVajdUbmlXNW5mLzczCnZ3ZDhH
+    R0RPeWxMR2pLTUtCNzgxc0RyK1F4aEV4R2puZTlFaHFtNGF1b3A2Q1VvMVhDK0p3allua3VIaHgy
+    T1MKUHBMUjZlRjJ0eWYzV0RPYXozNFhyVE5PQkRqV1pPY0doclYvRjJzUTZRS0NBUUVBeEJBREJ4
+    elhVelZPZXZ5YwpjZlBpa0J2K0QvWEpVdE0rYlI4V1lDcUpLQjQ4MW0yd1JZSWV1OCtkd0dCUW1o
+    S3Y0OVhsbjA4VmFkQWlITEg4CjZud1hIK1BCVUIyaHk5Tmd4d3JFRHgwbCtQM1M0TFNyOHVXcEgy
+    cWNYeWFHcTd6V0tMN2hVdnBaN1MxTHRTejAKMTB2MnJMOHZTdXZxZXFHZ3lyT05hZTR5N2dtcHF6
+    ZkF5bXAwaVFwZXdkZndwT0E4MVJuamRMcGFZZkU4RGVEbwpvWmorNWNZSm5GVXhtWXlERHdFQU5G
+    ZGo0T2ZZajNZdEMrUkxUb3hJSXhPUjNiOVRhciszWWtqYU5sVEsrWlVmCm5JY2tTUDhqNzFncHh1
+    ZFp4S0FLeGxlVTVVTW1qR3d2OU45ME9DZi8xK1Jpb1J2c3dnVERMNDFPZHVDK3FpRTMKK2JnOUlR
+    S0NBUUJDdExnK0hJNVYvcUFLYmtLNlpHK3FiVlI2Sm1kckRnNGdvTUo5ZHJKZVVhMGJtNTJlZW9k
+    VgpwOG9KS2kzQTBZbTBYb1pnanJTQytRWFp2TzIvSHRUMnhzZWg3OXU4SGxCcitjZFNraGFrb3lz
+    UFpiMEs3cWc1CnVKYmliUWpvaHJvZE5aQnNzVEJWY0dZWFBtUUlxK1d4anlvdGlYdm1qWElEdUo5
+    c0I0NzZybFQ0eWJjUHZDR1UKRTVaT2lYTkJMUTNzcUVGckd6UTNSeTFMaU1DSG1tb1dLWW5nNnNH
+    NkpxL2pCYWNLeXlzalR4ZU5FSzFFUjVmegpVY01IS3VWRjc1NWhkSjN2K2hxTDlSS1R6N3pxTlpL
+    aXVmYUNGYnR1V2pYRjdadGZEK0NkNVl4dStNVVpWMWRUClJvNnRzaHJRTFNLT3UzeXZHQnZvSEpZ
+    Vmlza3MzR041QW9JQkFFYURHb1JmTHhRSmxHMEUyd21YRjY5ZGpuRzgKMXdPWkxaTHI4RGRuME1E
+    VGY0OXBtZ0VISW5vOUxVOTEyWkVqelMxQmFaN1hqUkluTFV0TlU0WDU2V3ViWHpzVwpNc3gvSDBr
+    dGcxN21QcFE0d0FZNGtpZHU1cHpEdUJnek9XWHNVMFE5ZWhoU1dLWmxvcW1GaHNVbUtqaVhCQnk3
+    CjI3WjZET2xmMTlZeWJkR2I4WmNGb0plRUZ1YVFEN25KWll5cFFTNXAxdmR1MUNtVDRLeklNZjBt
+    Sm9FT0JmcFQKWDQ4ZmFDNXAvN2tQaThaeG9CMlNrTWd1UzR0bDdsdjdBUE1UTjRzajVuRGtGWUN0
+    L2l5UXZsUWR0bjYvRXFrawo3Q2MwOUpzN2k4SUNFekwrY01UZHg0SmFkTVVISDRuSFhSeDFlSkQ4
+    WUFVTTBLTXp0bEdYSys0VjkyWT0KLS0tLS1FTkQgUlNBIFBSSVZBVEUgS0VZLS0tLS0K
+---
+############################################################
+# OPA admission control policy for injecting OPA-Istio.
+############################################################
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  namespace: opa-istio
+  name: inject-policy
+data:
+  inject.rego: |
+    package istio
+
+    uid := input.request.uid
+
+    inject = {
+      "apiVersion": "admission.k8s.io/v1",
+      "kind": "AdmissionReview",
+      "response": {
+        "allowed": true,
+        "uid": uid,
+        "patchType": "JSONPatch",
+        "patch": base64.encode(json.marshal(patch)),
+      },
+    }
+
+    patch = [{
+      "op": "add",
+      "path": "/spec/containers/-",
+      "value": opa_container,
+    }, {
+      "op": "add",
+      "path": "/spec/volumes/-",
+      "value": opa_config_volume,
+    }, {
+      "op": "add",
+      "path": "/spec/volumes/-",
+      "value": opa_policy_volume,
+    }]
+
+    opa_container = {
+      "image": "openpolicyagent/opa:latest-istio",
+      "name": "opa-istio",
+      "args": [
+        "run",
+        "--server",
+        "--config-file=/config/config.yaml",
+        "--addr=localhost:8181",
+        "--diagnostic-addr=0.0.0.0:8282",
+        "/policy/policy.rego",
+      ],
+      "volumeMounts": [{
+        "mountPath": "/config",
+        "name": "opa-istio-config",
+      }, {
+        "mountPath": "/policy",
+        "name": "opa-policy",
+      }],
+      "readinessProbe": {
+        "httpGet": {
+          "path": "/health?plugins",
+          "port": 8282,
+        },
+      },
+      "livenessProbe": {
+        "httpGet": {
+          "path": "/health?plugins",
+          "port": 8282,
+        },
+      }
+    }
+
+    opa_config_volume = {
+      "name": "opa-istio-config",
+      "configMap": {"name": "opa-istio-config"},
+    }
+
+    opa_policy_volume = {
+      "name": "opa-policy",
+      "configMap": {"name": "opa-policy"},
+    }
+---
+############################################################
+# Service to expose OPA admission controller (required by Kubernetes.)
+############################################################
+apiVersion: v1
+kind: Service
+metadata:
+  name: admission-controller
+  namespace: opa-istio
+  labels:
+    app: admission-controller
+spec:
+  ports:
+    - name: https
+      protocol: TCP
+      port: 443
+      targetPort: 8443
+  selector:
+    app: admission-controller
+---
+############################################################
+# OPA admission controller deployment for injecting OPA-Istio.
+############################################################
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: admission-controller
+  namespace: opa-istio
+  name: admission-controller
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: admission-controller
+  template:
+    metadata:
+      labels:
+        app: admission-controller
+      name: admission-controller
+    spec:
+      containers:
+        - image: openpolicyagent/opa:latest
+          name: opa
+          ports:
+          - containerPort: 8443
+          args:
+          - "run"
+          - "--server"
+          - "--tls-cert-file=/certs/tls.crt"
+          - "--tls-private-key-file=/certs/tls.key"
+          - "--addr=0.0.0.0:8443"
+          - "/policies/inject.rego"
+          livenessProbe:
+            httpGet:
+              path: /health?plugins
+              scheme: HTTPS
+              port: 8443
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /health?plugins
+              scheme: HTTPS
+              port: 8443
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          volumeMounts:
+            - readOnly: true
+              mountPath: /certs
+              name: server-cert
+            - readOnly: true
+              mountPath: /policies
+              name: inject-policy
+      volumes:
+        - name: inject-policy
+          configMap:
+            name: inject-policy
+        - name: server-cert
+          secret:
+            secretName: server-cert
+---
+############################################################
+# OPA admission controller configuration.
+############################################################
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingWebhookConfiguration
+metadata:
+  name: opa-istio-admission-controller
+webhooks:
+  - name: istio.openpolicyagent.org
+    clientConfig:
+      service:
+        name: admission-controller
+        namespace: opa-istio
+        path: "/v0/data/istio/inject"
+      caBundle: |-
+        LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUZZRENDQTBpZ0F3SUJBZ0lKQUlWYlFzL2o3
+        VmJDTUEwR0NTcUdTSWIzRFFFQkN3VUFNQnN4R1RBWEJnTlYKQkFNTUVFOVFRU0JGYm5admVTQndi
+        SFZuYVc0d0hoY05NakF4TVRJek1UQTBORE00V2hjTk1qVXhNVEl5TVRBMApORE00V2pBVU1SSXdF
+        QVlEVlFRRERBbHZjR0V0Wlc1MmIza3dnZ0lpTUEwR0NTcUdTSWIzRFFFQkFRVUFBNElDCkR3QXdn
+        Z0lLQW9JQ0FRRCtsK2FpNUlBelZxc3U0RlFtNkRJclZaNTVHV2ZRbkFiUGxLbzl5VEtTOHhRNVBN
+        NkoKMHI4S2RtNE5FckdlRUVSTEN6cW1HdW9ORGhxaWwwQTZNVFd3aG4rbXFNSVNTQjU1ZmVUMEtr
+        ZWNYOUtrLy84OQoxM3hRMFU5VmlNSi9sK3RvRXBBUHJwVGNYSTByVDdBYUZwTmRrSDY0MmJCR1JI
+        bXBkK1lpWFRjVGZ5cXo2ZHZlCndlbmROcERQckI5UHc5N1k5amxUbXZTaTVpVFZqMitZSmd3a21L
+        QnRGVHNqVkdIT2VmZ0FIcURob0M4TmhocDAKYUxqTTNzaGhpM2JUd1A2VjVOT212dnVLUm1tN3pm
+        azdMVUJZTkxYNmZYSXpDcFIxUEpBeGdra01UWlA2Y1hFNAordm4xako3bS9lZHFZVHUyK242dEdQ
+        WFVST2FZKzNNTkVNbm4xY1ZzMVRLQ25jbmFnU3RvcUZ3bmhWak4yNlV1CjE3c1puZitsNXFPd0di
+        TmNseDdIckY2SHNpU2hBKzEzOE5pbUt4bmZtQ3l2YnZJOHBYMUkxMXV5SzB6Wmg2Mk4KRHBPdU1E
+        VWFGQldkR05veGNwNXFEcHNWancxUzJCWWpkZlduTzVjZWc5WnNzSmNNVXFhOHRIdVF3ejBERjhv
+        cQpyeGI4MFZOMDUzcWlpQnVCUGg4MVpRQnZFeitTMERFakdPcUNnMGxPV0hMWTdLanBSbUh5TVo5
+        K0Z0NHRNQU91Cm9CaUFzYmdoSnVMREZ5bklHcUNQNS91OHN3QTdSUHlKODFuWnV1TWZKVTlHUnF1
+        OUgydlEzczRXYzlFRXZaZGkKNnZhTCticXlSNFJyNlg0YXpnb1ZGRlA1dzR4WTBCR1Z4WWN6cWlS
+        Tnc4cHRlNm5SWlhsZk5iT1NOUUlEQVFBQgpvNEd0TUlHcU1BNEdBMVVkRHdFQi93UUVBd0lEdURB
+        VEJnTlZIU1VFRERBS0JnZ3JCZ0VGQlFjREFUQWRCZ05WCkhRNEVGZ1FVS1hTN2tUR2FlOHRLWVp2
+        UkxSUzV4U0h3cTRFd05RWURWUjBqQkM0d0xLRWZwQjB3R3pFWk1CY0cKQTFVRUF3d1FUMUJCSUVW
+        dWRtOTVJSEJzZFdkcGJvSUpBTmFPYlFCRlAwMWlNQzBHQTFVZEVRUW1NQ1NDSW1GawpiV2x6YzJs
+        dmJpMWpiMjUwY205c2JHVnlMbTl3WVMxcGMzUnBieTV6ZG1Nd0RRWUpLb1pJaHZjTkFRRUxCUUFE
+        CmdnSUJBS3RxZWY0dE12R3hCZU0xKy9GZTRxOVYrOUpuMHFKb1A0aWVTQXB3aGtxekFKYllJUno2
+        VkNrK2V2WkUKWHZ2MjVCQmVOSUQwd2pXb1hEdHdTMVgrQ0hkN0J5TEdLNjZEMitwZXpFN0hDenhD
+        RUxKNCtpWXRjS3JVQTR2ZQpXbkVnSW5qa1Vpb3kwZkRkWmVUWG5ISUlpeTlJVVZEVDlxN2xHalE0
+        YXhiSUd6NkczY2VHUStYOVFCMDAzMzNICm82emY5a1Frc1hQam00dWpsOVV2Z1JkNDVZQW04Y3FK
+        cTRqb3hHQjdGMVpUMVJYbkdKeXYvd3FOSk04VGQ5UGoKYXNiN0lCa09Lelh4VmREWE5UZmNLWU44
+        TzNFQkwwVGo0VExtM1VKUmNxeGhFNk1ZVXJvRTYvZHIybHh0ZzRZLwo1SmpYWjBiQ2ZyTnh5UFIz
+        NTEyNDRPWnVQMzM0ajhDOXg1cU1YaDZUMzhpS01GWmxwNmpjMEdZTUdzK3pBNGNlCk5GWk9RMjF6
+        ZE9vR2NQS2d3NDJjd09iU1ZaRUl0NFJIN0hVcDdDV1pCK0VpTXQxZUVKa1VkeE5jUFl3VlBmdSsK
+        Z2JJV3Y2ZUl6VkJJOElBdHdUQTBFcmU1RGxQQmYyTnJOclB1cmZzYjJiZ21CUTFJREN6V29yUnE2
+        WG1UMWUregovM1JSYVJpVUx4TmFub2szTGdSa09oWDZqR3FiM1gxRjhwdHNiK1BHUnlXcDVkdS9D
+        UEFucGZ3VnVtbzQ4bXBxCkRJSWRMMVBLZk1DZFlrMGFLZ0xUVnU0bDI2N1B4cklpaGs4SHFRWFdQ
+        YVp5NDJ0UlVaOXZFNWZoblNwMXpGQUsKcTNaMVcxVDdpMkNQdmFuNTlGckhlUG9ia0Z2Z1M4M3Zu
+        VXFIM2h6aGZ1QlpDMmNmCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K
+    rules:
+      - operations: ["CREATE"]
+        apiGroups: [""]
+        apiVersions: ["v1"]
+        resources: ["pods"]
+    namespaceSelector:
+      matchLabels:
+        opa-istio-injection: enabled
+    failurePolicy: Fail
+    admissionReviewVersions: ["v1", "v1beta1"]
+    sideEffects: None
+---

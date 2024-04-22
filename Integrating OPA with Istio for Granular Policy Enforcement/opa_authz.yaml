@@ -1,0 +1,38 @@
+############################################################
+# AuthorizationPolicy to tell Istio to use OPA as the Authz Server
+############################################################
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: ext-authz
+spec:
+  action: CUSTOM
+  provider:
+    # The provider name must match the extension provider defined in the mesh config.
+    # You can also replace this with sample-ext-authz-http to test the other external authorizer definition.
+    name: opa-ext-authz-grpc
+  rules:
+  - to:
+    - operation:
+        notPaths: ["/health"]
+---
+############################################################
+# ServiceEntry to register the OPA-Istio sidecars as external authorizers.
+############################################################
+apiVersion: networking.istio.io/v1beta1
+kind: ServiceEntry
+metadata:
+  name: opa-ext-authz-grpc-local
+spec:
+  hosts:
+  - "opa-ext-authz-grpc.local"
+  exportTo:
+  - "."
+  endpoints:
+  - address: "127.0.0.1"
+  ports:
+  - name: grpc
+    number: 9191
+    protocol: GRPC
+  resolution: STATIC
+---

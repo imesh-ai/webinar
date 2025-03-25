@@ -1,0 +1,14 @@
+apiVersion: networking.istio.io/v1
+kind: Sidecar
+metadata:
+  name: httpbin-sidecar
+spec:
+  workloadSelector:
+    labels:
+      app: httpbin
+  ingress:
+  - port:
+      number: 9080
+      protocol: HTTP
+      name: merged-prometheus
+    defaultEndpoint: 0.0.0.0:15020

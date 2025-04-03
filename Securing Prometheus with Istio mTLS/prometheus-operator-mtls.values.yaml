@@ -1,0 +1,60 @@
+# additional components 
+alertmanager:
+  enabled: false
+grafana:
+  enabled: false
+nodeExporter:
+  enabled: false
+thanosRuler:
+  enabled: false
+prometheusOperator:
+  enabled: true
+
+prometheus:
+  prometheusSpec:
+    scrapeClasses:
+    - name: istio-mtls
+      default: false
+      tlsConfig:
+        caFile: "/etc/istio-certs/root-cert.pem"
+        certFile: "/etc/istio-certs/cert-chain.pem"
+        keyFile: "/etc/istio-certs/key.pem"
+        insecureSkipVerify: true
+    podMetadata:
+      labels:
+        # Inject istio into prometheus pod
+        sidecar.istio.io/inject: "true"
+      annotations:
+        proxy.istio.io/config: |
+          proxyMetadata:
+            OUTPUT_CERTS: /etc/istio-certs
+        sidecar.istio.io/userVolumeMount: '[{"name": "istio-certs", "mountPath": "/etc/istio-certs"}]'
+    volumes:
+    - name: istio-certs
+      emptyDir:
+        medium: Memory
+    volumeMounts:
+    - name: istio-certs
+      mountPath: /etc/istio-certs/
+
+# default scrape targets
+kubernetesServiceMonitors:
+  enabled: false
+kubeApiServer:
+  enabled: false
+kubelet:
+  enabled: false
+kubeControllerManager:
+  enabled: false
+coreDns:
+  enabled: false
+kubeDns:
+  enabled: false
+kubeEtcd:
+  enabled: false
+kubeScheduler:
+  enabled: false
+kubeProxy:
+  enabled: false
+kubeStateMetrics:
+  enabled: false

@@ -55,3 +55,58 @@ spec:
       action: replace
       targetLabel: pod
 ---
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: envoy-stats-monitor-http
+  namespace: prometheus
+  labels:
+    release: prometheus
+spec:
+  selector:
+    matchExpressions:
+    - {key: istio-prometheus-ignore, operator: DoesNotExist}
+  namespaceSelector:
+    matchNames:
+    - default
+  podMetricsEndpoints:
+  - path: /stats/prometheus
+    scheme: http
+    interval: 15s
+    relabelings:
+    - action: keep
+      sourceLabels: [__meta_kubernetes_pod_container_name]
+      regex: "istio-proxy"
+    - action: keep
+      sourceLabels: [__meta_kubernetes_pod_annotationpresent_prometheus_io_scrape]
+    # this http scraping config is only valid for pods having port annotation but not portOverride labels
+    - action: keep
+      regex: ();(\d+)
+      separator: ;
+      sourceLabels:
+      - __meta_kubernetes_pod_label_prometheus_io_portOverride
+      - __meta_kubernetes_pod_annotation_prometheus_io_port
+    # replace target address with IPv6 host:port
+    - action: replace
+      regex: (\d+);(([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4})
+      replacement: '[$2]:$1'
+      sourceLabels:
+      - __meta_kubernetes_pod_annotation_prometheus_io_port
+      - __meta_kubernetes_pod_ip
+      targetLabel: __address__
+    # replace target address with IPv4 host:port
+    - action: replace
+      regex: (\d+);((([0-9]+?)(\.|$)){4})
+      replacement: '$2:$1'
+      sourceLabels:
+      - __meta_kubernetes_pod_annotation_prometheus_io_port
+      - __meta_kubernetes_pod_ip
+      targetLabel: __address__
+    - action: labeldrop
+      regex: "__meta_kubernetes_pod_label_(.+)"
+    - sourceLabels: [__meta_kubernetes_namespace]
+      action: replace
+      targetLabel: namespace
+    - sourceLabels: [__meta_kubernetes_pod_name]
+      action: replace
+      targetLabel: pod

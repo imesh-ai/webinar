@@ -1,3 +1,15 @@
+# additional components 
+alertmanager:
+  enabled: false
+grafana:
+  enabled: false
+nodeExporter:
+  enabled: false
+thanosRuler:
+  enabled: false
+prometheusOperator:
+  enabled: true
+
 prometheus:
   prometheusSpec:
     scrapeClasses:
@@ -24,3 +36,25 @@ prometheus:
     volumeMounts:
     - name: istio-certs
       mountPath: /etc/istio-certs/
+
+# default scrape targets
+kubernetesServiceMonitors:
+  enabled: false
+kubeApiServer:
+  enabled: false
+kubelet:
+  enabled: false
+kubeControllerManager:
+  enabled: false
+coreDns:
+  enabled: false
+kubeDns:
+  enabled: false
+kubeEtcd:
+  enabled: false
+kubeScheduler:
+  enabled: false
+kubeProxy:
+  enabled: false
+kubeStateMetrics:
+  enabled: false
